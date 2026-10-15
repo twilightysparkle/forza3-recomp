@@ -1,0 +1,23 @@
+# Build output
+out/
+
+# Game files: never commit copyrighted assets
+assets/*
+!assets/README.md
+
+# Code recompiled from the game's default.xex (derived from copyrighted code);
+# build.cmd regenerates it from your own dump.
+generated/default/
+
+# Saves, profile, installed Disc 2 content
+userdata/
+
+# Local test runs: logs, screenshots, recordings, texture/PIX dumps
+run/
+
+# Local analysis output
+__pycache__/
+codegen_run*.log
+codegen_run*.out
+build_run*.log
+*.dmp

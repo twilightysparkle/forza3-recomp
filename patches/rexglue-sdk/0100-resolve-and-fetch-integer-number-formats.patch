@@ -1,0 +1,118 @@
+diff --git a/src/graphics/pipeline/shader/dxbc_translator_fetch.cpp b/src/graphics/pipeline/shader/dxbc_translator_fetch.cpp
+index 31de175..450dc84 100644
+--- a/src/graphics/pipeline/shader/dxbc_translator_fetch.cpp
++++ b/src/graphics/pipeline/shader/dxbc_translator_fetch.cpp
+@@ -1941,6 +1941,72 @@ void DxbcShaderTranslator::ProcessTextureFetchInstruction(
+         a_.OpBreak();
+         a_.OpEndSwitch();
+       }
++
++      // Integer num_format (fetch constant dword 3 bit 0): the host samples
++      // the texels as normalized, while the guest returns the integer values
++      // (before the exponent bias - for instance, a 16_16 variance shadow map
++      // fetched as signed integers with exp_adjust -15). Scale back by
++      // 2^w - 1 for unsigned and 2^(w - 1) - 1 for signed and unsigned-biased
++      // components, for formats with a uniform component width w, leaving
++      // constant 0 / 1 swizzle components alone.
++      dxbc::Src fetch_word_3(RequestTextureFetchConstantWord(tfetch_index, 3));
++      uint32_t integer_width_temp = PushSystemTemp();
++      a_.OpAnd(dxbc::Dest::R(integer_width_temp, 0b0001), fetch_word_3, dxbc::Src::LU(1));
++      a_.OpIf(true, dxbc::Src::R(integer_width_temp, dxbc::Src::kXXXX));
++      {
++        a_.OpAnd(dxbc::Dest::R(integer_width_temp, 0b0010),
++                 RequestTextureFetchConstantWord(tfetch_index, 1), dxbc::Src::LU(63));
++        a_.OpMov(dxbc::Dest::R(integer_width_temp, 0b0001), dxbc::Src::LU(0));
++        a_.OpSwitch(dxbc::Src::R(integer_width_temp, dxbc::Src::kYYYY));
++        for (xenos::TextureFormat format :
++             {xenos::TextureFormat::k_8, xenos::TextureFormat::k_8_A,
++              xenos::TextureFormat::k_8_B, xenos::TextureFormat::k_8_8,
++              xenos::TextureFormat::k_8_8_8_8, xenos::TextureFormat::k_8_8_8_8_A}) {
++          a_.OpCase(dxbc::Src::LU(uint32_t(format)));
++        }
++        a_.OpMov(dxbc::Dest::R(integer_width_temp, 0b0001), dxbc::Src::LU(8));
++        a_.OpBreak();
++        for (xenos::TextureFormat format :
++             {xenos::TextureFormat::k_16, xenos::TextureFormat::k_16_16,
++              xenos::TextureFormat::k_16_16_16_16}) {
++          a_.OpCase(dxbc::Src::LU(uint32_t(format)));
++        }
++        a_.OpMov(dxbc::Dest::R(integer_width_temp, 0b0001), dxbc::Src::LU(16));
++        a_.OpBreak();
++        a_.OpEndSwitch();
++        a_.OpIf(true, dxbc::Src::R(integer_width_temp, dxbc::Src::kXXXX));
++        {
++          dxbc::Dest integer_scale_dest(
++              dxbc::Dest::R(integer_width_temp, used_result_nonzero_components));
++          dxbc::Src integer_scale_src(dxbc::Src::R(integer_width_temp));
++          uint32_t integer_mask_temp = PushSystemTemp();
++          dxbc::Dest integer_mask_dest(
++              dxbc::Dest::R(integer_mask_temp, used_result_nonzero_components));
++          dxbc::Src integer_mask_src(dxbc::Src::R(integer_mask_temp));
++          // -1 for signed (1) and unsigned-biased (2) components, 0 otherwise.
++          a_.OpIAdd(integer_mask_dest, dxbc::Src::R(signs_temp), dxbc::Src::LI(-1));
++          a_.OpULT(integer_mask_dest, integer_mask_src, dxbc::Src::LU(2));
++          // Shift = w or w - 1 (broadcasting w from X before it's overwritten).
++          a_.OpIAdd(integer_mask_dest, integer_mask_src,
++                    dxbc::Src::R(integer_width_temp, dxbc::Src::kXXXX));
++          a_.OpIShL(integer_mask_dest, dxbc::Src::LU(1), integer_mask_src);
++          a_.OpIAdd(integer_mask_dest, integer_mask_src, dxbc::Src::LI(-1));
++          a_.OpUToF(integer_mask_dest, integer_mask_src);
++          // Only components taken from the texture (swizzle 0...3, not 0 / 1).
++          a_.OpUBFE(integer_scale_dest, dxbc::Src::LU(3), dxbc::Src::LU(1, 4, 7, 10),
++                    fetch_word_3);
++          a_.OpULT(integer_scale_dest, integer_scale_src, dxbc::Src::LU(4));
++          a_.OpMovC(integer_mask_dest, integer_scale_src, integer_mask_src, dxbc::Src::LF(1.0f));
++          a_.OpMul(dxbc::Dest::R(system_temp_result_, used_result_nonzero_components),
++                   dxbc::Src::R(system_temp_result_), integer_mask_src);
++          // Release integer_mask_temp.
++          PopSystemTemp();
++        }
++        a_.OpEndIf();
++      }
++      a_.OpEndIf();
++      // Release integer_width_temp.
++      PopSystemTemp();
+     }
+     if (signs_temp != UINT32_MAX) {
+       PopSystemTemp();
+diff --git a/src/graphics/util/draw.cpp b/src/graphics/util/draw.cpp
+index 305380e..4066412 100644
+--- a/src/graphics/util/draw.cpp
++++ b/src/graphics/util/draw.cpp
+@@ -1110,6 +1157,25 @@ bool GetResolveInfo(const RegisterFile& regs, const memory::Memory& memory,
+   return true;
+ }
+ 
++// Raw resolve is only safe when the destination would read the same bits the
++// active EDRAM view already stores. Canonical fixed colors are unsigned
++// fractions and float colors are floats; signed/integer destinations need the
++// full resolve so copy_dest_number can actually repack them.
++static constexpr bool ColorResolveNumberFormatMatches(xenos::ColorFormat color_format,
++                                                      xenos::SurfaceNumberFormat num_format) {
++  switch (color_format) {
++    case xenos::ColorFormat::k_16_FLOAT:
++    case xenos::ColorFormat::k_16_16_FLOAT:
++    case xenos::ColorFormat::k_16_16_16_16_FLOAT:
++    case xenos::ColorFormat::k_32_FLOAT:
++    case xenos::ColorFormat::k_32_32_FLOAT:
++    case xenos::ColorFormat::k_32_32_32_32_FLOAT:
++      return num_format == xenos::SurfaceNumberFormat::kFloat;
++    default:
++      return num_format == xenos::SurfaceNumberFormat::kUnsignedRepeatingFraction;
++  }
++}
++
+ ResolveCopyShaderIndex ResolveInfo::GetCopyShader(uint32_t draw_resolution_scale_x,
+                                                   uint32_t draw_resolution_scale_y,
+                                                   ResolveCopyShaderConstants& constants_out,
+@@ -1124,7 +1190,9 @@ ResolveCopyShaderIndex ResolveInfo::GetCopyShader(uint32_t draw_resolution_scale
+        xenos::IsSingleCopySampleSelected(copy_dest_coordinate_info.copy_sample_select) &&
+        xenos::IsColorResolveFormatBitwiseEquivalent(
+            xenos::ColorRenderTargetFormat(color_edram_info.format),
+-           xenos::ColorFormat(copy_dest_info.copy_dest_format)))) {
++           xenos::ColorFormat(copy_dest_info.copy_dest_format)) &&
++       ColorResolveNumberFormatMatches(xenos::ColorFormat(copy_dest_info.copy_dest_format),
++                                       copy_dest_info.copy_dest_number))) {
+     if (edram_info.msaa_samples >= xenos::MsaaSamples::k4X) {
+       shader = source_is_64bpp ? ResolveCopyShaderIndex::kFast64bpp4xMSAA
+                                : ResolveCopyShaderIndex::kFast32bpp4xMSAA;

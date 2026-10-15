@@ -1,0 +1,62 @@
+# forza3 runtime settings. The build copies this file next to forza3.exe
+# (copy_if_different), so edit it here. In game, the F2 settings menu saves
+# the player's changes to forza3.user.toml next to the exe, loaded on top of
+# this file and never touched by the build. (The SDK's F4 overlay saves over
+# the copy of this file next to the exe, which the next build replaces.)
+# Keys are SDK cvar names; command-line flags (--name=value) override them.
+
+# --- Window -------------------------------------------------------------------
+fullscreen = false
+window_width = 1280
+window_height = 720
+
+# --- Graphics -----------------------------------------------------------------
+# Copy render-to-texture (resolve) results back to guest memory (one frame
+# delayed, on cache misses). Without it, FM3's CPU writes near its shadow maps
+# make the emulator re-upload those pages from stale guest memory, corrupting
+# the shadow maps in page-sized blocks: the car's dark rotating shadow block,
+# grid/dash patterns on the road and flashing while driving. "full" also works
+# but stalls. (The float24 depth settings only masked part of this and broke
+# 5 shadow pipelines, so they stay at their defaults.)
+readback_resolve = "some"
+
+# --- Keyboard as controller -----------------------------------------------------
+# Keys can't be pressed partway, so triggers and sticks are either fully on or off.
+# Comma = alternatives. Modifiers match exactly: "Up" does not fire while Shift
+# is held, so the arrow keys can drive both the D-pad and (with Shift) the
+# right stick. Reserved by the SDK overlays: F3, F4, F7, Backtick.
+mnk_mode = true
+mnk_mouse = false
+
+# Driving
+keybind_right_trigger = "W"            # throttle
+keybind_left_trigger = "S"             # brake / reverse
+keybind_lstick_left = "A"              # steer left
+keybind_lstick_right = "D"             # steer right
+keybind_lstick_up = "Shift+W"
+keybind_lstick_down = "Shift+S"
+keybind_lstick_press = "F"
+
+# Face buttons (also menu confirm/back)
+keybind_a = "Space,Return"
+keybind_b = "E,Backspace,Escape"
+keybind_x = "Q,X"
+keybind_y = "R,Y"
+
+# Shoulders, camera
+keybind_left_shoulder = "V"
+keybind_right_shoulder = "C"
+keybind_rstick_up = "Shift+Up"
+keybind_rstick_down = "Shift+Down"
+keybind_rstick_left = "Shift+Left"
+keybind_rstick_right = "Shift+Right"
+keybind_rstick_press = "G"
+
+# Menus
+keybind_dpad_up = "Up"
+keybind_dpad_down = "Down"
+keybind_dpad_left = "Left"
+keybind_dpad_right = "Right"
+keybind_back = "Tab"
+keybind_start = "P,F1"
+keybind_guide = ""

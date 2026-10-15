@@ -1,0 +1,23 @@
+diff --git a/src/graphics/util/draw.cpp b/src/graphics/util/draw.cpp
+index 1dda447..4024d4b 100644
+--- a/src/graphics/util/draw.cpp
++++ b/src/graphics/util/draw.cpp
+@@ -890,10 +890,15 @@ bool GetResolveInfo(const RegisterFile& regs, const memory::Memory& memory,
+     y1 = y0 + int32_t(xenos::kMaxResolveSize);
+   }
+ 
+-  assert_true(x0 < x1 && y0 < y1);
++  // An empty or inverted region (e.g. entirely outside the EDRAM after the window
++  // offset) is a no-op, not an error: the callers skip resolves with a zero width or
++  // height. As in Xenia (draw_util.cc), where it was changed because Forza Horizon
++  // issues such resolves constantly; as an error every one logged two lines and
++  // failed the draw.
+   if (x0 >= x1 || y0 >= y1) {
+-    REXGPU_ERROR("Resolve region is empty");
+-    return false;
++    info_out.coordinate_info.width_div_8 = 0;
++    info_out.height_div_8 = 0;
++    return true;
+   }
+ 
+   info_out.coordinate_info.width_div_8 = uint32_t(x1 - x0) >> xenos::kResolveAlignmentPixelsLog2;
