@@ -17,10 +17,13 @@ if "%VSDIR%"=="" (
   echo Visual Studio 2022 / Build Tools with the C++ workload not found.
   exit /b 1
 )
+rem vcvars64 looks for vswhere on PATH.
+set PATH=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer;%PATH%
 call "%VSDIR%\VC\Auxiliary\Build\vcvars64.bat" >nul || exit /b 1
 
-rem clang from LLVM; CMake and Ninja from PATH, else the copies VS ships.
-set PATH=%ProgramFiles%\LLVM\bin;%PATH%;%VSDIR%\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin;%VSDIR%\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja
+rem clang from LLVM; CMake and Ninja from a standalone install, else the copies
+rem VS ships. Put first: cmd stops searching PATH at a stray quote in it.
+set PATH=%ProgramFiles%\LLVM\bin;%ProgramFiles%\CMake\bin;%VSDIR%\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin;%VSDIR%\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja;%PATH%
 where clang++ >nul 2>nul || (echo clang++ not found: install LLVM ^(winget install LLVM.LLVM^). & exit /b 1)
 where git >nul 2>nul || (echo git not found: install Git ^(winget install Git.Git^). & exit /b 1)
 
