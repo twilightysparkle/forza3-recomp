@@ -44,7 +44,7 @@ rendered through Direct3D 12.
 
 - Windows 10 or 11, 64-bit
 - A GPU with Direct3D 12 support
-- About 15 GB of free disk space (game, installed Disc 2 content and the build)
+- About 20 GB of free disk space (11 GB extracted game, 3.5 GB installed Disc 2 content, the build)
 - Your own *Forza Motorsport 3* disc, extracted. Tested with the
   **Ultimate Collection** (title ID `4D53084D`, Disc 1 media ID `6F74359D`,
   version 8). Disc 2 is optional but recommended.
