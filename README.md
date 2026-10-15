@@ -9,7 +9,7 @@
 [![Game data](https://img.shields.io/badge/Game_files-Not_included-EF4444?style=for-the-badge)](#legal-notice)
 [![Status](https://img.shields.io/badge/Status-Work_in_progress-F59E0B?style=for-the-badge)](#known-issues)
 
-[Getting started](#getting-started) · [Settings menu](#the-settings-menu-f2) · [Building from source](#building-from-source) · [Report an issue](../../issues)
+[Getting started](#getting-started) · [Settings menu](#the-settings-menu-f2) · [Changelog](CHANGELOG.md) · [Building from source](#building-from-source) · [Report an issue](../../issues)
 
 </div>
 
@@ -19,9 +19,8 @@ for x86-64: there is no CPU emulation and no JIT compiler. Graphics are
 rendered through Direct3D 12.
 
 > [!IMPORTANT]
-> No copyrighted game files are included, and neither is the code recompiled
-> from the game. You must provide your own Xbox 360 copy of *Forza Motorsport 3*
-> and build the port yourself.
+> No copyrighted game files are included. You must provide your own Xbox 360
+> copy of *Forza Motorsport 3*.
 
 > [!WARNING]
 > This is an early work in progress with no releases yet. The game boots,
@@ -48,18 +47,23 @@ rendered through Direct3D 12.
 - Your own *Forza Motorsport 3* disc, extracted. Tested with the
   **Ultimate Collection** (title ID `4D53084D`, Disc 1 media ID `6F74359D`,
   version 8). Disc 2 is optional but recommended.
-- To build: Visual Studio 2022 (or Build Tools) with the C++ workload, LLVM,
-  CMake and Python (see [Building from source](#building-from-source))
+- To build: Visual Studio 2022 (or Build Tools) with the C++ workload, LLVM
+  and Git (see [Building from source](#building-from-source))
 
 ## Getting started
 
-1. Extract **Disc 1** into `assets\`, so that `assets\default.xex` exists.
-2. Optionally extract **Disc 2** into `assets\Disc 2\`. Its 8 content packages
+1. [Build the port](#building-from-source): run **`build.bat`**.
+2. Extract **Disc 1** into `assets\`, so that `assets\default.xex` exists.
+3. Optionally extract **Disc 2** into `assets\Disc 2\`. Its 8 content packages
    are installed into your save folder on first launch (the game's own
    "insert Disc 2" step needs a tray swap, so the port does it for you).
-3. [Build the port](#building-from-source).
-4. Run **`out\build\win-amd64-relwithdebinfo\forza3.exe`** (double-click works).
-   It finds `assets\` by itself and keeps your saves in `userdata\` beside it.
+4. Run **`run.bat`**, or `out\build\win-amd64-release\forza3.exe` directly
+   (double-click works). It finds `assets\` by itself and keeps your saves in
+   `userdata\` beside it.
+
+To play elsewhere, `tools\package_release.ps1` makes a self-contained zip in
+`dist\`: extract it anywhere, put Disc 1 in its `game\` folder and run
+`forza3.exe` (see [`docs/PLAYERS.md`](docs/PLAYERS.md), shipped as `README.txt`).
 
 On first launch a hint in the corner reminds you that **F2** opens the settings
 menu.
@@ -135,50 +139,55 @@ If the game crashes, a dump is written to `crashdumps\`. Please open an
 
 ## Building from source
 
-Requires Visual Studio 2022 (or Build Tools) with the C++ workload, LLVM 20 or
-newer, CMake, and Python 3:
+Requires Visual Studio 2022 (or Build Tools) with the C++ workload, LLVM (clang
+20 or newer) and Git:
 
 ```
 winget install Microsoft.VisualStudio.2022.BuildTools --override "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
-winget install LLVM.LLVM Kitware.CMake Python.Python.3.12
+winget install LLVM.LLVM Git.Git
+build.bat release          :: or relwithdebinfo for symbolized crash dumps
+tools\package_release.ps1  :: builds dist\Forza3-Native-<version>-windows-x64.zip
 ```
 
-1. Clone the [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk) v0.10.0 next
-   to this repository (`..\rexglue-sdk`), apply the patches with
-   `git apply ..\forza3-recomp\patches\rexglue-sdk\*.patch`, then rebuild its
-   resolve shaders with
-   `python tools\build_resolve_shaders.py <xenia> <xenia-canary> ..\rexglue-sdk\src\graphics\shaders\bytecode\d3d12_5_1`
-   (needs upstream [Xenia](https://github.com/xenia-project/xenia) and
-   [xenia-canary](https://github.com/xenia-canary/xenia-canary) source trees and
-   the Windows SDK's FXC).
-2. Build and install the SDK to `..\rexglue-sdk\out\install\win-amd64`
-   (`cmake --build out/build/win-amd64 --config Release --target install`).
-3. With your `default.xex` in `assets\`, run **`build.cmd`** (default
-   `relwithdebinfo`; `build.cmd release` also works). It runs `rexglue codegen`
-   to translate the game into `generated\default\`, then compiles everything.
+On its first run `build.bat` builds the [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk)
+into `_sdk\` ([`scripts/get-sdk.ps1`](scripts/get-sdk.ps1)): it clones v0.10.0
+with its submodules, applies the fixes in [`patches/rexglue-sdk/`](patches/rexglue-sdk)
+and the rebuilt resolve shaders, then builds and installs it. That takes a
+while once; it is redone only when the patches change. (The official SDK zip
+can't be used because of those fixes.)
 
-The recompiled code is not committed (it is a translation of the game's own
-program), so a clone needs your game to build.
+The recompiled code in `generated/` is committed, so a clone builds without the
+game. To regenerate it, put your `default.xex` in `assets\` and build again.
+`run.bat` starts the build against `assets\` and logs to `run.log`.
+
+The resolve shaders in `patches/rexglue-sdk/shaders/` are generated by
+[`tools/build_resolve_shaders.py`](tools/build_resolve_shaders.py) from upstream
+[Xenia](https://github.com/xenia-project/xenia) and
+[xenia-canary](https://github.com/xenia-canary/xenia-canary) sources (needs the
+Windows SDK's FXC); rerun it only to change them.
 
 ### Repository layout
 
 | Path | Contents |
 |---|---|
+| [`build.bat`](build.bat), [`run.bat`](run.bat) | Build (and the SDK on first run); developer run |
 | [`forza3_manifest.toml`](forza3_manifest.toml) | `rexglue codegen` configuration: functions the analysis missed, fiber replacements, setjmp/longjmp |
+| [`generated/`](generated) | The game's program code translated to C++ (machine-generated, committed) |
 | [`src/`](src) | Port code on top of the recompiled game: app setup, settings menu, Disc 2 install, crash dumps, fixes and diagnostics |
 | [`config/forza3.toml`](config/forza3.toml) | Runtime settings the game needs and the default key layout, copied next to the exe |
-| [`patches/rexglue-sdk/`](patches/rexglue-sdk) | SDK fixes: nine from [ForzaHorizon1-ReImagined](https://github.com/Dyotson/ForzaHorizon1-ReImagined) (all matching upstream Xenia) and `0100` for FM3's shadows |
-| [`tools/`](tools) | XEX/disassembly scans used to find what codegen missed, the resolve shader build, texture decoding, scripted test sessions (`drive.ps1`) |
-| [`generated/`](generated) | `rexglue.cmake` (SDK build glue); `generated\default\` is created by the build |
-| `assets/`, `userdata/` | Your game files and saves (not in the repository) |
+| [`patches/rexglue-sdk/`](patches/rexglue-sdk) | SDK fixes: nine from [ForzaHorizon1-ReImagined](https://github.com/Dyotson/ForzaHorizon1-ReImagined) (all matching upstream Xenia), `0100` for FM3's shadows, and its rebuilt resolve shaders |
+| [`tools/`](tools) | Packaging, the resolve shader build, texture decoding, scripted test sessions (`drive.ps1`); [`tools/analysis/`](tools/analysis) has the XEX scripts used to find what codegen missed |
+| [`docs/`](docs) | Player notes (`PLAYERS.md`, shipped as `README.txt`), third-party notices |
+| [`cmake/`](cmake), [`scripts/`](scripts) | Codegen stand-in for clones without the game; the SDK build |
+| `assets/`, `userdata/`, `_sdk/` | Your game files, your saves, the built SDK (not in the repository) |
 
 ### How it was ported
 
 | Piece | Where |
 |---|---|
 | PowerPC → C++ translation | `rexglue codegen`, driven by [`forza3_manifest.toml`](forza3_manifest.toml) |
-| Functions the analysis missed: ~15 entry points, plus 193 found only through data and code-built pointers (vtables, callbacks) | `[entrypoint.functions]` in the manifest, found with `tools/ptrscan.py` |
-| XAPI fibers (the title's job system) mapped to host fibers | `[entrypoint.rexcrt]` in the manifest, found with `tools/fibers.py` |
+| Functions the analysis missed: ~15 entry points, plus 193 found only through data and code-built pointers (vtables, callbacks) | `[entrypoint.functions]` in the manifest, found with `tools/analysis/ptrscan.py` |
+| XAPI fibers (the title's job system) mapped to host fibers | `[entrypoint.rexcrt]` in the manifest, found with `tools/analysis/fibers.py` |
 | libjpeg's `longjmp` out of decode errors (crashed in the R8 showcase) | `setjmp_address` / `longjmp_address` in the manifest |
 | Race replay stream to `cache:\` (null dereference at race start) | [`src/utility_drive.cpp`](src/utility_drive.cpp) |
 | Disc 2 content packages installed without a disc swap | [`src/disc2_install.cpp`](src/disc2_install.cpp) |
@@ -215,9 +224,11 @@ Every recompiled function is a weak `sub_<address>` that forwards to
 ## Legal notice
 
 This repository contains no game assets: no executables, disc images, textures,
-audio, video, or code recompiled from the game. You must own the game to use
-this port. Forza Motorsport is a trademark of Microsoft; this project is not
+audio or video. `generated/` is a machine translation of the game's program
+code. You must own the game to use this port. Forza Motorsport is a trademark of Microsoft; this project is not
 affiliated with or endorsed by Microsoft, Xbox Game Studios or Turn 10 Studios.
+Third-party licenses are in [`docs/THIRD_PARTY_NOTICES.txt`](docs/THIRD_PARTY_NOTICES.txt),
+included in the player zip.
 
 ## Credits
 

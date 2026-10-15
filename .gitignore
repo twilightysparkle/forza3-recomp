@@ -1,23 +1,26 @@
-# Build output
-out/
+# Game data - never commit. Players use their own copy.
+/assets/*
+!/assets/README.md
+/game/
+*.iso
+*.xex
 
-# Game files: never commit copyrighted assets
-assets/*
-!assets/README.md
+# Build output, packages, downloaded and built SDK
+/out/
+/dist/
+/_sdk/
 
-# Code recompiled from the game's default.xex (derived from copyrighted code);
-# build.cmd regenerates it from your own dump.
-generated/default/
-
-# Saves, profile, installed Disc 2 content
-userdata/
-
-# Local test runs: logs, screenshots, recordings, texture/PIX dumps
-run/
+# Per-player and per-run files
+/userdata/
+forza3.user.toml
+/run/
+/run*.log
+logs/
+crashdumps/
+pixcaptures/
+*.dmp
 
 # Local analysis output
 __pycache__/
-codegen_run*.log
-codegen_run*.out
-build_run*.log
-*.dmp
+/codegen_run*
+/build_run*

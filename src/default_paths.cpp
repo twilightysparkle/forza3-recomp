@@ -12,13 +12,17 @@ namespace forza3 {
 
 namespace {
 
-// The exe folder and up to five parents (covers out\build\<preset>\).
+// "game" (a release: the player extracts the disc next to the exe) or
+// "assets" (the repository), in the exe folder or up to five parents (covers
+// out\build\<preset>\).
 std::filesystem::path FindAssets() {
   std::error_code ec;
   std::filesystem::path dir = rex::filesystem::GetExecutableFolder();
   for (int i = 0; i < 6 && !dir.empty(); ++i) {
-    if (std::filesystem::is_regular_file(dir / "assets" / "default.xex", ec)) {
-      return dir / "assets";
+    for (const char* name : {"game", "assets"}) {
+      if (std::filesystem::is_regular_file(dir / name / "default.xex", ec)) {
+        return dir / name;
+      }
     }
     std::filesystem::path parent = dir.parent_path();
     if (parent == dir) break;
@@ -33,7 +37,7 @@ void ApplyDefaultPaths(rex::PathConfig& paths) {
   if (paths.game_data_root.empty()) {
     paths.game_data_root = FindAssets();
     if (paths.game_data_root.empty()) {
-      REXLOG_ERROR("No assets\\default.xex found next to forza3.exe or in a parent folder");
+      REXLOG_ERROR("No game\\default.xex or assets\\default.xex found next to forza3.exe");
       return;  // The SDK reports the missing --game_data_root.
     }
     REXLOG_INFO("Game data: {}", paths.game_data_root.string());
