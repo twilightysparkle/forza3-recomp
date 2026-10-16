@@ -47,6 +47,7 @@ foreach ($dll in "msvcp140.dll", "msvcp140_1.dll", "vcruntime140.dll", "vcruntim
 # Documentation.
 Copy-Item (Join-Path $root "docs\PLAYERS.md") (Join-Path $stage "README.txt")
 Copy-Item (Join-Path $root "docs\THIRD_PARTY_NOTICES.txt") $stage
+Copy-Item (Join-Path $root "LICENSE") (Join-Path $stage "LICENSE.txt")
 # Checksums of everything shipped.
 $sums = Get-ChildItem $stage -Recurse -File | Sort-Object FullName | ForEach-Object {
   $rel = $_.FullName.Substring($stage.Length + 1).Replace('\', '/')

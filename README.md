@@ -8,6 +8,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows_x64-0078D4?style=for-the-badge&logo=windows&logoColor=white)](#requirements)
 [![SDK](https://img.shields.io/badge/ReXGlue_SDK-v0.10.0-6E40C9?style=for-the-badge)](https://github.com/rexglue/rexglue-sdk)
 [![Game data](https://img.shields.io/badge/Game_files-Not_included-EF4444?style=for-the-badge)](#legal-notice)
+[![License](https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Work_in_progress-F59E0B?style=for-the-badge)](#known-issues)
 
 [Download](../../releases/latest) · [Getting started](#getting-started) · [Changelog](CHANGELOG.md) · [Building from source](#building-from-source) · [Report an issue](../../issues)
@@ -243,7 +244,12 @@ This repository contains no game assets: no executables, disc images, textures,
 audio or video. `generated/` is a machine translation of the game's program
 code. You must own the game to use this port. Forza Motorsport is a trademark of Microsoft; this project is not
 affiliated with or endorsed by Microsoft, Xbox Game Studios or Turn 10 Studios.
-Third-party licenses are in [`docs/THIRD_PARTY_NOTICES.txt`](docs/THIRD_PARTY_NOTICES.txt),
+
+The project's own code (everything except `generated/` and third-party
+material) is released under the [MIT License](LICENSE). `generated/` is derived
+from the game's program and is not covered by it. The SDK patches keep their
+origins' licenses (ForzaHorizon1-ReImagined's MIT, Xenia's BSD). Third-party
+licenses are in [`docs/THIRD_PARTY_NOTICES.txt`](docs/THIRD_PARTY_NOTICES.txt),
 included in the player zip.
 
 ## Credits

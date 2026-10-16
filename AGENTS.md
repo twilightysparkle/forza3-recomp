@@ -11,11 +11,15 @@ player-facing picture; this file is about working on the code.
   textures, screenshots or videos of the game, texture or frame dumps. `assets/`,
   `game/`, `userdata/`, `run/`, `*.iso` and `*.xex` are ignored; keep it that way.
 - **`generated/default/` is a machine translation of the game's code.** It is
-  committed so clones build without the game, which is why the repository must
-  stay **private**. Don't hand-edit it; change `forza3_manifest.toml` or wrap a
-  function from `src/` instead.
+  committed (as hl360-Forza2 does) so clones build without the game; it is not
+  covered by the project's MIT license. Don't hand-edit it; change
+  `forza3_manifest.toml` or wrap a function from `src/` instead. Codegen's
+  `codegen.d` is ignored (it holds absolute local paths); the stamps and
+  `codegen.partition.json` are committed with the sources.
 - Hashes are fine to commit (`launcher/data/game_files.sha256`); file contents are not.
-- hl360-Forza2 (the design reference) has no license: take ideas, not code.
+- The project's own code is MIT ([LICENSE](LICENSE)). Code taken from elsewhere
+  needs a compatible license and its notice in `docs/THIRD_PARTY_NOTICES.txt`.
+  hl360-Forza2 (the design reference) has no license: take ideas, not code.
 
 ## Build
 
@@ -117,7 +121,7 @@ and make every MSAA resolve blocky). Rerun it only to change those shaders.
 
 ## Commits and releases
 
-- Branch `main` on the private `twilightysparkle/forza3-recomp`. Keep
+- Branch `main` on `twilightysparkle/forza3-recomp`. Keep
   `CHANGELOG.md` updated; the version shown by the launcher and used for the
   release zip is its newest `## [x.y.z]` entry.
 - Releases: `build.bat release`, `tools\package_release.ps1`, then
