@@ -45,6 +45,11 @@ endif()
 
 rexglue_setup_target(forza3 GPU_PLUGINS xenos)
 
+# Launcher: disc image import, profiles, PLAY (launcher/). Windows only.
+if(WIN32)
+    add_subdirectory(launcher)
+endif()
+
 # Runtime settings (window, keyboard, graphics) read from <exe dir>/forza3.toml,
 # plus the SDK's DLLs (staged by rexglue_setup_target only when the exe
 # relinks; refreshed here so a rebuilt SDK is always picked up). A separate

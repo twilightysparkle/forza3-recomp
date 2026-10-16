@@ -2,16 +2,17 @@
 #
 # usage: tools\package_release.ps1 [-Build release] [-Version 0.1.0]
 # Run build.bat (same build) first. The version defaults to the newest entry in
-# CHANGELOG.md. The zip holds the exe, the SDK DLLs, the Visual C++ runtime,
-# forza3.toml, the player notes, third-party notices, an empty game\ folder for
-# the player's disc files, and SHA256SUMS.txt. No game data is included.
+# CHANGELOG.md. The zip holds the launcher and the game, the SDK DLLs, the Visual
+# C++ runtime, forza3.toml, game_files.sha256, the player notes, third-party
+# notices and SHA256SUMS.txt. No game data: players import their own discs
+# with the launcher.
 param([string]$Build = "release", [string]$Version = "")
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path $PSScriptRoot
 $bin = Join-Path $root "out\build\win-amd64-$Build"
 if (-not (Test-Path (Join-Path $bin "forza3.exe"))) {
-  throw "No build in $bin: run build.bat $Build first"
+  throw "No build in ${bin}: run build.bat $Build first"
 }
 if (-not $Version) {
   $line = Select-String -Path (Join-Path $root "CHANGELOG.md") -Pattern '^## \[(\d+\.\d+\.\d+)\]' |
@@ -24,10 +25,10 @@ $name = "Forza3-Native-$Version-windows-x64"
 $dist = Join-Path $root "dist"
 $stage = Join-Path $dist $name
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
-New-Item -ItemType Directory -Force (Join-Path $stage "game") | Out-Null
+New-Item -ItemType Directory -Force $stage | Out-Null
 
 # Game and SDK binaries.
-foreach ($file in "forza3.exe", "forza3.toml", "rexruntime.dll", "rexgpu-xenos.dll", "TracyClient.dll") {
+foreach ($file in "Forza3Launcher.exe", "forza3.exe", "forza3.toml", "game_files.sha256", "rexruntime.dll", "rexgpu-xenos.dll", "TracyClient.dll") {
   $path = Join-Path $bin $file
   if (Test-Path $path) { Copy-Item $path $stage }
   elseif ($file -ne "TracyClient.dll") { throw "Missing $path" }
@@ -46,11 +47,6 @@ foreach ($dll in "msvcp140.dll", "msvcp140_1.dll", "vcruntime140.dll", "vcruntim
 # Documentation.
 Copy-Item (Join-Path $root "docs\PLAYERS.md") (Join-Path $stage "README.txt")
 Copy-Item (Join-Path $root "docs\THIRD_PARTY_NOTICES.txt") $stage
-Set-Content -Path (Join-Path $stage "game\PUT_DISC_1_HERE.txt") -Encoding ASCII -Value @(
-  "Extract Forza Motorsport 3 Disc 1 into this folder, so that default.xex is",
-  "directly inside it. Optionally extract Disc 2 into a 'Disc 2' subfolder.",
-  "See README.txt.")
-
 # Checksums of everything shipped.
 $sums = Get-ChildItem $stage -Recurse -File | Sort-Object FullName | ForEach-Object {
   $rel = $_.FullName.Substring($stage.Length + 1).Replace('\', '/')

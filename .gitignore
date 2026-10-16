@@ -13,6 +13,10 @@
 # Per-player and per-run files
 /userdata/
 forza3.user.toml
+forza3.launcher.ini
+
+# Box art: copyrighted, kept local (the launcher reads it at runtime)
+cover.png
 /run/
 /run*.log
 logs/

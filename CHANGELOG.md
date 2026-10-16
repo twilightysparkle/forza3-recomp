@@ -6,6 +6,11 @@ First playable build: the game boots, menus work and races are drivable.
 
 ### Added
 
+- `Forza3Launcher.exe`: install from the disc images (Install -> Choose ISO
+  and import, for Disc 1 and Disc 2, both required), with every extracted file
+  checked against `game_files.sha256`; named profiles with separate saves (the
+  name is the in-game gamertag) and shared Disc 2 content; graphics, controls
+  (key remapping), language and sound settings; PLAY.
 - Static recompilation of Forza Motorsport 3 (Ultimate Collection, title
   `4D53084D`) with the ReXGlue SDK v0.10.0, Direct3D 12 rendering.
 - In-game settings menu (F2): display, graphics, key remapping, language and

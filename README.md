@@ -4,12 +4,13 @@
 
 **A static recompilation of the Xbox 360 racing game for modern Windows PCs.**
 
+[![Latest release](https://img.shields.io/github/v/release/twilightysparkle/forza3-recomp?style=for-the-badge&label=Download)](../../releases/latest)
 [![Platform](https://img.shields.io/badge/Platform-Windows_x64-0078D4?style=for-the-badge&logo=windows&logoColor=white)](#requirements)
 [![SDK](https://img.shields.io/badge/ReXGlue_SDK-v0.10.0-6E40C9?style=for-the-badge)](https://github.com/rexglue/rexglue-sdk)
 [![Game data](https://img.shields.io/badge/Game_files-Not_included-EF4444?style=for-the-badge)](#legal-notice)
 [![Status](https://img.shields.io/badge/Status-Work_in_progress-F59E0B?style=for-the-badge)](#known-issues)
 
-[Getting started](#getting-started) · [Settings menu](#the-settings-menu-f2) · [Changelog](CHANGELOG.md) · [Building from source](#building-from-source) · [Report an issue](../../issues)
+[Download](../../releases/latest) · [Getting started](#getting-started) · [Changelog](CHANGELOG.md) · [Building from source](#building-from-source) · [Report an issue](../../issues)
 
 </div>
 
@@ -20,10 +21,11 @@ rendered through Direct3D 12.
 
 > [!IMPORTANT]
 > No copyrighted game files are included. You must provide your own Xbox 360
-> copy of *Forza Motorsport 3*.
+> copy of *Forza Motorsport 3 Ultimate Collection* as disc images (Disc 1 and
+> Disc 2).
 
 > [!WARNING]
-> This is an early work in progress with no releases yet. The game boots,
+> This is an early work in progress. The game boots,
 > menus work, the Disc 2 content is installed, and races are drivable with the
 > correct car shadows. Career mode, online features and most tracks have not
 > been tested. Xbox Live is not available.
@@ -32,60 +34,60 @@ rendered through Direct3D 12.
 
 - Native x86-64 execution through static PowerPC-to-C++ recompilation.
 - Direct3D 12 rendering, with internal resolutions up to 3x (2160p, experimental).
+- Launcher: ISO import with SHA-256 file verification, named profiles with separate saves, settings.
 - In-game settings menu (**F2**): display, graphics, key remapping, language and sound.
 - Anisotropic filtering, FXAA, AMD FSR and AMD CAS.
 - Xbox-compatible controllers and fully remappable keyboard controls.
 - Disc 2 (Ultimate Collection bonus content) installed automatically, no disc swap.
-- Starts with no arguments: finds the game and keeps saves next to it.
 - Fixes for the car shadow and road flickering bugs in the emulated GPU.
 
 ## Requirements
 
 - Windows 10 or 11, 64-bit
 - A GPU with Direct3D 12 support
-- About 20 GB of free disk space (11 GB extracted game, 3.5 GB installed Disc 2 content, the build)
-- Your own *Forza Motorsport 3* disc, extracted. Tested with the
-  **Ultimate Collection** (title ID `4D53084D`, Disc 1 media ID `6F74359D`,
-  version 8). Disc 2 is optional but recommended.
-- To build: Visual Studio 2022 (or Build Tools) with the C++ workload, LLVM
-  and Git (see [Building from source](#building-from-source))
+- About 15 GB of free disk space (11 GB extracted game, 3.5 GB installed Disc 2 content)
+- Your own *Forza Motorsport 3 Ultimate Collection* disc images (`.iso`),
+  **Disc 1 and Disc 2**, title ID `4D53084D`. The launcher verifies the
+  extracted files against the Redump dumps of the USA release.
+
+No additional runtime needs to be installed; the Visual C++ runtime is bundled
+with each release.
 
 ## Getting started
 
-1. [Build the port](#building-from-source): run **`build.bat`**.
-2. Extract **Disc 1** into `assets\`, so that `assets\default.xex` exists.
-3. Optionally extract **Disc 2** into `assets\Disc 2\`. Its 8 content packages
-   are installed into your save folder on first launch (the game's own
-   "insert Disc 2" step needs a tray swap, so the port does it for you).
-4. Run **`run.bat`**, or `out\build\win-amd64-release\forza3.exe` directly
-   (double-click works). It finds `assets\` by itself and keeps your saves in
-   `userdata\` beside it.
+1. Download `Forza3-Native-<version>-windows-x64.zip` from
+   [Releases](../../releases) and extract it to any folder.
+2. Run **`Forza3Launcher.exe`**.
+3. Go to **Install** → **Choose ISO and import** and pick your Disc 1 image. The
+   game is extracted to the `game\` folder and every file is checked against
+   [`game_files.sha256`](launcher/data/game_files.sha256). It takes a minute or
+   two. Do the same with your **Disc 2** image (the bonus content, also
+   required). If the game is already extracted, use **Change folder** instead.
+4. Go to **Profiles** and create your profile.
+5. Press **PLAY**.
 
-To play elsewhere, `tools\package_release.ps1` makes a self-contained zip in
-`dist\`: extract it anywhere, put Disc 1 in its `game\` folder and run
-`forza3.exe` (see [`docs/PLAYERS.md`](docs/PLAYERS.md), shipped as `README.txt`).
+The first time a profile plays, the Disc 2 content is installed for it (shared
+between profiles, so it is only copied once).
 
-On first launch a hint in the corner reminds you that **F2** opens the settings
-menu.
-
-## The settings menu (F2)
+## The launcher
 
 | Tab | What you can do |
 |---|---|
-| **Display** | Fullscreen, window size, vertical sync, keep 16:9 (black bars), upscaling filter (bilinear, AMD CAS, AMD FSR 1). |
-| **Graphics** | Internal resolution (1x / 2x / 3x), anisotropic filtering, extra FXAA, render-to-texture readback (leave it on *Balanced*). |
-| **Controls** | Keyboard controls on or off, mouse camera and sensitivity, and every key binding: set, add an alternative key, clear or reset, with a warning when a key is used twice. |
-| **Game & sound** | Console language, mute, and a list of hotkeys. |
+| **Profiles** | Create, choose and delete profiles. Each profile has its own saves; its name is your gamertag in the game. |
+| **Graphics** | Fullscreen or window, window size, vertical sync, keep 16:9, upscaling (bilinear, AMD CAS, AMD FSR 1), internal resolution, anisotropic filtering, extra FXAA, render-to-texture readback. |
+| **Controls** | Keyboard controls, mouse for the camera, and key remapping. |
+| **Language & sound** | Game language and mute. |
+| **Install** | Import Disc 1 and Disc 2 from their ISOs or choose an extracted folder; verify the files. |
 
-Most changes apply immediately. Settings marked *restart* take effect after a
-restart: the footer lists them and offers **Save and restart**. **Save** keeps
-your changes in `forza3.user.toml`; **Reset to defaults** goes back to the
-shipped settings. The game ignores controller input while the menu is open, and
-it works with the mouse or the keyboard (arrows, Enter/Space, PgUp/PgDn to
-switch tabs).
+Changes are saved automatically to `forza3.user.toml`. The cover art is not
+shipped (it is copyrighted artwork): put any `cover.png` next to
+`Forza3Launcher.exe` and it fills the left column; without it the launcher
+draws its own panel. If the game closes with an error, the launcher tells you.
 
-Other hotkeys: **F3** performance overlay, **F4** every emulator option,
-**F7** achievements, **`** (Backtick) log console.
+In game, **F2** opens the same settings (most apply immediately; the menu
+offers **Save and restart** for the rest), **F3** the performance overlay,
+**F4** every emulator option, **F7** achievements, **`** (Backtick) the log
+console.
 
 ## Controls
 
@@ -106,20 +108,23 @@ Any Xbox-compatible controller works without setup. Default keyboard layout
 | Back button | Tab |
 | Start / pause | P, F1 |
 
-All keys can be changed in the **F2** menu → **Controls**.
+All keys can be changed in the launcher (**Controls**) or in game (**F2**).
 
 ## Where things are
 
 | What | Where |
 |---|---|
-| Saves, profile, installed Disc 2 content | `userdata\`, next to `assets\` |
-| Your settings | `forza3.user.toml`, next to the exe |
+| Saves | `userdata\profiles\<profile>\` |
+| Deleted profiles | `userdata\deleted-profiles\` |
+| Installed Disc 2 content, shader cache | `userdata\shared\`, `userdata\cache\` |
+| Your settings | `forza3.user.toml`, next to the launcher |
 | Shipped settings | `forza3.toml`, next to the exe (copied from `config\` by the build) |
 | Logs | `logs\`, next to the exe |
 | Crash dumps | `crashdumps\`, next to the exe |
 
-`--game_data_root=<dir>` and `--user_data_root=<dir>` override the game and
-save folders.
+`forza3.exe` also runs on its own, without the launcher: it finds `game\` (or
+`assets\` in the repository) and keeps a single save in `userdata\`.
+`--game_data_root=<dir>` and `--user_data_root=<dir>` override those folders.
 
 ## Known issues
 
@@ -156,9 +161,16 @@ and the rebuilt resolve shaders, then builds and installs it. That takes a
 while once; it is redone only when the patches change. (The official SDK zip
 can't be used because of those fixes.)
 
-The recompiled code in `generated/` is committed, so a clone builds without the
+The build produces `forza3.exe` and `Forza3Launcher.exe` side by side. The
+recompiled code in `generated/` is committed, so a clone builds without the
 game. To regenerate it, put your `default.xex` in `assets\` and build again.
-`run.bat` starts the build against `assets\` and logs to `run.log`.
+`run.bat` starts the game straight from the build against `assets\` and logs
+to `run.log`.
+
+`launcher/data/game_files.sha256` lists the files of the Redump USA disc
+images: extract them with `Forza3Launcher.exe --extract-iso <image.iso> <dir>`
+(the launcher's own importer, without the window) and run
+`python tools\make_manifest.py <dir> launcher\data\game_files.sha256`.
 
 The resolve shaders in `patches/rexglue-sdk/shaders/` are generated by
 [`tools/build_resolve_shaders.py`](tools/build_resolve_shaders.py) from upstream
@@ -174,8 +186,9 @@ Windows SDK's FXC); rerun it only to change them.
 | [`forza3_manifest.toml`](forza3_manifest.toml) | `rexglue codegen` configuration: functions the analysis missed, fiber replacements, setjmp/longjmp |
 | [`generated/`](generated) | The game's program code translated to C++ (machine-generated, committed) |
 | [`src/`](src) | Port code on top of the recompiled game: app setup, settings menu, Disc 2 install, crash dumps, fixes and diagnostics |
+| [`launcher/`](launcher) | `Forza3Launcher` (SDL3 + Dear ImGui): profiles, settings, ISO import and verification; `data/game_files.sha256` is the file list |
 | [`config/forza3.toml`](config/forza3.toml) | Runtime settings the game needs and the default key layout, copied next to the exe |
-| [`patches/rexglue-sdk/`](patches/rexglue-sdk) | SDK fixes: nine from [ForzaHorizon1-ReImagined](https://github.com/Dyotson/ForzaHorizon1-ReImagined) (all matching upstream Xenia), `0100` for FM3's shadows, and its rebuilt resolve shaders |
+| [`patches/rexglue-sdk/`](patches/rexglue-sdk) | SDK fixes: nine from [ForzaHorizon1-ReImagined](https://github.com/Dyotson/ForzaHorizon1-ReImagined) (all matching upstream Xenia), `0100` for FM3's shadows (and its rebuilt resolve shaders), `0101` for the profile name |
 | [`tools/`](tools) | Packaging, the resolve shader build, texture decoding, scripted test sessions (`drive.ps1`); [`tools/analysis/`](tools/analysis) has the XEX scripts used to find what codegen missed |
 | [`docs/`](docs) | Player notes (`PLAYERS.md`, shipped as `README.txt`), third-party notices |
 | [`cmake/`](cmake), [`scripts/`](scripts) | Codegen stand-in for clones without the game; the SDK build |
@@ -195,6 +208,9 @@ Windows SDK's FXC); rerun it only to change them.
 | Dark shadow block around the car: signed-integer resolves and integer texture fetches | SDK patch [`0100`](patches/rexglue-sdk/0100-resolve-and-fetch-integer-number-formats.patch) and [`tools/build_resolve_shaders.py`](tools/build_resolve_shaders.py) |
 | Settings menu, key remapping, `forza3.user.toml` | [`src/settings_menu.cpp`](src/settings_menu.cpp) |
 | Start without arguments | [`src/default_paths.cpp`](src/default_paths.cpp) |
+| Disc image extraction (XDVDFS, Redump and trimmed layouts) | [`launcher/src/iso.cpp`](launcher/src/iso.cpp) |
+| File verification against the discs' contents | [`launcher/src/verify.cpp`](launcher/src/verify.cpp), list made by [`tools/make_manifest.py`](tools/make_manifest.py) |
+| Profiles with separate saves, shared Disc 2 content, gamertag | [`launcher/src/profiles.cpp`](launcher/src/profiles.cpp), SDK patch [`0101`](patches/rexglue-sdk/0101-profile-name-cvar.patch) (`--user_name`) |
 | Guest call chain on crashes | [`src/crash_dump.cpp`](src/crash_dump.cpp) |
 | GPU frame captures (`--pix_gpu_capturer=true`, then F9) | [`src/pix_capture.cpp`](src/pix_capture.cpp) |
 
